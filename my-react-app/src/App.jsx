@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import EditForm from './components/EditForm'
 import './App.css'
 
 function App() {
@@ -8,6 +9,9 @@ function App() {
   const [results, setResults] = useState([])
   const [query, setQuery] = useState('')
   const [favorites, setFavorites] = useState([])
+
+  const [editMode, setEditMode] = useState(false)
+  const [currentFavorite, setCurrentFavorite] = useState(null)
 
   const handleSearch = async (e) => {
     e.preventDefault()
@@ -44,6 +48,27 @@ function App() {
     setFavorites((prevFavorites) => prevFavorites.filter((fav) => fav.trackId !== id))
   }
 
+const handleEditFavorite = (id) => {
+  const favoriteToEdit = favorites.find((fav) => fav.trackId === id)
+  setCurrentFavorite(favoriteToEdit)
+  setEditMode(true)
+}
+
+const handleSaveEdit = (updatedFavorite) => {
+  setFavorites((prevFavorites) =>
+    prevFavorites.map((fav) =>
+      fav.trackId === updatedFavorite.trackId ? updatedFavorite : fav
+    )
+  )
+  setEditMode(false)
+  setCurrentFavorite(null)
+}
+
+const handleCancelEdit = () => {
+  setEditMode(false)
+  setCurrentFavorite(null)
+}
+
   if (error) return <div>{error.message}</div>
   if (loading) return <div>Loading...</div>
 
@@ -78,23 +103,34 @@ function App() {
           )}
         </div>
 
-        <div>
-          <h1>Favorites</h1>
-          {favorites.length === 0 ? (
-            <p>No favorites added</p>
+<div>
+  <h1>Favorites</h1>
+  {favorites.length === 0 ? (
+    <p>No favorites added</p>
+  ) : (
+    <div>
+      {favorites.map((fav) => (
+        <div key={fav.trackId}>
+          {editMode && currentFavorite?.trackId === fav.trackId ? (
+            <EditForm 
+              favorite={currentFavorite}
+              onSave={handleSaveEdit}
+              onCancel={handleCancelEdit}
+            />
           ) : (
-            <div>
-              {favorites.map((fav) => (
-                <div key={fav.trackId}>
-                  <img src={fav.artworkUrl100} alt={fav.trackName} />
-                  <h2>{fav.trackName}</h2>
-                  <p>{fav.artistName}</p>
-                  <button onClick={() => handleRemoveFromFavorites(fav.trackId)}>Remove from Favorites</button>
-                </div>
-              ))}
-            </div>
+            <>
+              <img src={fav.artworkUrl100} alt={fav.trackName} />
+              <h2>{fav.trackName}</h2>
+              <p>{fav.artistName}</p>
+              <button onClick={() => handleRemoveFromFavorites(fav.trackId)}>Remove from Favorites</button>
+              <button onClick={() => handleEditFavorite(fav.trackId)}>Edit</button>
+            </>
           )}
         </div>
+      ))}
+    </div>
+  )}
+</div>
       </section>
     </>
   )
